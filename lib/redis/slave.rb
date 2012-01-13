@@ -57,7 +57,6 @@ daemonize no
 bind #{options[:slave][:host]}
 port #{options[:slave][:port]}
 logfile #{options[:logfile]}
-databases 1
 save 900 1
 rdbcompression yes
 dbfilename dump.rdb
