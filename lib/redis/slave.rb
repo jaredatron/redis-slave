@@ -6,29 +6,33 @@ require "redis/slave/version"
 
 class Redis::Slave
 
-  attr_reader :process, :master_host, :master_port, :host, :port, :logfile, :dir
+  attr_reader :process, :options
 
   def initialize options={}
-    @master_host = options[:master_host] || '127.0.0.1'
-    @master_port = options[:master_port] || '6379'
-    @host        = options[:host]        || '127.0.0.1'
-    @port        = options[:port]        || find_available_port
-    @logfile     = options[:logfile]     || Tempfile.new('redis-slave-logfile').path
-    @dir         = options[:dir]         || Dir.tmpdir
+    @options = options;
+    options[:master] ||= {}
+    options[:slave]  ||= {}
+    options[:master][:host] ||= '127.0.0.1'
+    options[:master][:port] ||= '6379'
+    options[:slave ][:host] ||= '127.0.0.1'
+    options[:slave ][:port] ||= find_available_port
+    options[:logfile]       ||= Tempfile.new('redis-slave-logfile').path
+    options[:dir]           ||= Dir.tmpdir
   end
 
-  def redis_master
-    ::Redis.new(:host => @master_host, :port => @master_port)
+  def master
+    ::Redis.new(options[:master])
   end
 
-  def redis_slave
+  def slave
     start!
-    ::Redis.new(:host => @host, :port => @port)
+    ::Redis.new(options[:slave])
   end
 
-  def redis
-    Balancer.new(redis_master, redis_slave)
+  def balancer
+    Balancer.new(master, slave)
   end
+  alias_method :redis, :balancer
 
   def started?
     !!@started
@@ -47,17 +51,17 @@ class Redis::Slave
 
   def config
 <<-CONFIG
-slaveof #{master_host} #{master_port}
+slaveof #{options[:master][:host]} #{options[:master][:port]}
 slave-serve-stale-data yes
 daemonize no
-bind #{host}
-port #{port}
-logfile #{logfile}
+bind #{options[:slave][:host]}
+port #{options[:slave][:port]}
+logfile #{options[:logfile]}
 databases 1
 save 900 1
 rdbcompression yes
 dbfilename dump.rdb
-dir #{dir}
+dir #{options[:dir]}
 appendonly no
 appendfsync no
 appendfsync everysec
