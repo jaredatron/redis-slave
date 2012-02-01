@@ -1,6 +1,6 @@
 class Redis::Slave::Balancer
 
-  undef_method :type
+  undef_method :type if instance_methods.include?('type')
 
   MUTATING_METHODS = %w{
     []=
