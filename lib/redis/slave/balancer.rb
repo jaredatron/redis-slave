@@ -6,7 +6,7 @@ class Redis::Slave::Balancer
     []=
     set hmset mset lset mapped_hmset getset msetnx setex hset setnx hsetnx
     del hdel
-    srem zremrangebyscore zremrangebyrank zrem lrem
+    sadd zadd srem zremrangebyscore zremrangebyrank zrem lrem
     spop brpop rpop blpop lpop
     lpush rpush
     rpoplpush
